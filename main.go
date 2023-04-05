@@ -1,10 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"github.com/antlr/antlr4/runtime/Go/antlr"
-
-	"./parser"
+	"whilego/parser"
 )
 
 func main() {
@@ -12,15 +10,12 @@ func main() {
 	is := antlr.NewInputStream("1 + 2 * 3")
 
 	// Create the Lexer
-	lexer := parser.NewCalcLexer(is)
+	lexer := parser.NewWhilelangLexer(is)
+	stream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
 
-	// Read all tokens
-	for {
-		t := lexer.NextToken()
-		if t.GetTokenType() == antlr.TokenEOF {
-			break
-		}
-		fmt.Printf("%s (%q)\n",
-			lexer.SymbolicNames[t.GetTokenType()], t.GetText())
-	}
+	// Create the Parser
+	p := parser.NewWhilelangParser(stream)
+
+	// Finally parse the expression
+	antlr.ParseTreeWalkerDefault.Walk(&calcListener{}, p.Start())
 }
