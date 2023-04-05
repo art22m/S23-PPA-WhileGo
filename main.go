@@ -1,21 +1,34 @@
 package main
 
 import (
-	"github.com/antlr/antlr4/runtime/Go/antlr"
+	"fmt"
+	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
+	"os"
 	"whilego/parser"
 )
 
+type TreeShapeListener struct {
+	*parser.BaseWhilelangListener
+}
+
+func NewTreeShapeListener() *TreeShapeListener {
+	return new(TreeShapeListener)
+}
+
+func (this *TreeShapeListener) EnterEveryRule(ctx antlr.ParserRuleContext) {
+	fmt.Println(ctx.GetText())
+}
+
 func main() {
-	// Setup the input
-	is := antlr.NewInputStream("1 + 2 * 3")
+	input, _ := antlr.NewFileStream(os.Args[1])
 
-	// Create the Lexer
-	lexer := parser.NewWhilelangLexer(is)
-	stream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
+	lexer := parser.NewWhilelangLexer(input)
 
-	// Create the Parser
+	stream := antlr.NewCommonTokenStream(lexer, 0)
+
 	p := parser.NewWhilelangParser(stream)
+	p.AddErrorListener(antlr.NewDiagnosticErrorListener(true))
+	p.BuildParseTrees = true
 
-	// Finally parse the expression
-	antlr.ParseTreeWalkerDefault.Walk(&calcListener{}, p.Start())
+	antlr.ParseTreeWalkerDefault.Walk(NewTreeShapeListener(), p.Program())
 }
